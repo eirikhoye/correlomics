@@ -6,4 +6,4 @@ Features to add:
 - make it snakemake compatible
 - package directory only contain required code, no data
 - input data to be specified with YAML file
-
+- use virtualenv not conda (figure out how to make this work with snakemake)
