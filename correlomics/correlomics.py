@@ -14,18 +14,17 @@ import copy
 import json
 import glob
 
-
-with open('species_dict.txt') as f:
-	data = f.read()
-species_names = json.loads(data)
-
 class Correlomics():
-    
 	def __init__(self, species):
+		"""Initialize the class with the species name, and parse the reference files"""
 		self.species = species
+		with open('species_dict.txt') as f:
+			data = f.read()
+		species_names = json.loads(data)
 		self.reference('data/fasta/prifile.fasta', 'data/fasta/mature_extended.fas', 'data/fasta/star_extended_fake_451.fas', 'data/fasta/mature.fasta', 'data/fasta/starfile_fake_451.fasta', self.species)
 
 	def reference(self, pri_ref, mature_ext, star_ext, mature_ref, star_ref, species):
+		"""Parses the reference files and stores them as class attributes"""
 		self.pri_dict        = {key:value for (key,value) in SeqIO.to_dict(SeqIO.parse(open(pri_ref,    'r'), 'fasta')).items() if key.startswith(self.species)}
 		self.mature_ext      = {key:value for (key,value) in SeqIO.to_dict(SeqIO.parse(open(mature_ext, 'r'), 'fasta')).items() if key.startswith(self.species)}
 		self.star_ext        = {key:value for (key,value) in SeqIO.to_dict(SeqIO.parse(open(star_ext,   'r'), 'fasta')).items() if key.startswith(self.species)}
@@ -274,7 +273,8 @@ for directory in os.listdir(samdir):
     species_obj = Correlomics(species_id)
     print('nr_files: ',len(glob.glob(samdir + str(directory) + '/*.sam')))
     if len(glob.glob(samdir + str(directory) + '/*.sam')) == 0:
-        species_obj.df = pd.DataFrame(columns=['Gene_name', 'Mature_Seq', 'Star_Seq', 'Mature_type', 'Tissue', 'Species', 'Mature_Start_-5', 'Mature_Start_-4', 'Mature_Start_-3', 'Mature_Start_-2', 'Mature_Start_-1',
+        species_obj.df = pd.DataFrame(columns=['Gene_name', 'Mature_Seq', 'Star_Seq', 'Mature_type', 'Tissue', 'Species', 'Mature_Start_-5', 'Mature_Start_-4', 
+		'Mature_Start_-3', 'Mature_Start_-2', 'Mature_Start_-1',
             'Mature_Start_0', 'Mature_Start_1', 'Mature_Start_2', 'Mature_Start_3', 'Mature_Start_4', 'Mature_Start_5', 'Mature_end_-5', 'Mature_end_-4',
             'Mature_end_-3', 'Mature_end_-2', 'Mature_end_-1', 'Mature_end_0', 'Mature_end_1', 'Mature_end_2', 'Mature_end_3', 'Mature_end_4',
             'Mature_end_5', 'Star_Start_-5', 'Star_Start_-4', 'Star_Start_-3', 'Star_Start_-2', 'Star_Start_-1', 'Star_Start_0', 'Star_Start_1',
