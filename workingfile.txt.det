@@ -1,0 +1,97 @@
+
+Structure    1
+
+workingfile.txt                                   
+ Initial dG =    -55.30
+
+External loop:	ddG =  -0.50  36 ss bases &  1 closing helices.
+Stack:		ddG =  -1.30 External closing pair is T(    18)-A(   109)
+Stack:		ddG =  -1.10 External closing pair is A(    19)-T(   108)
+Stack:		ddG =  -2.10 External closing pair is T(    20)-A(   107)
+Stack:		ddG =  -3.40 External closing pair is G(    21)-C(   106)
+Stack:		ddG =  -2.10 External closing pair is C(    22)-G(   105)
+Stack:		ddG =  -1.30 External closing pair is T(    23)-A(   104)
+Helix:		ddG = -11.30   7 base pairs.
+Interior loop:	ddG =   1.10 External closing pair is T(    24)-G(   103)
+Stack:		ddG =  -2.10 External closing pair is C(    26)-G(   101)
+Stack:		ddG =  -1.30 External closing pair is T(    27)-A(   100)
+Stack:		ddG =  -2.20 External closing pair is A(    28)-T(    99)
+Stack:		ddG =  -2.10 External closing pair is C(    29)-G(    98)
+Stack:		ddG =  -1.30 External closing pair is T(    30)-A(    97)
+Stack:		ddG =  -0.90 External closing pair is A(    31)-T(    96)
+Stack:		ddG =  -0.90 External closing pair is A(    32)-T(    95)
+Stack:		ddG =  -0.90 External closing pair is A(    33)-T(    94)
+Stack:		ddG =  -2.10 External closing pair is A(    34)-T(    93)
+Stack:		ddG =  -3.40 External closing pair is G(    35)-C(    92)
+Stack:		ddG =  -2.10 External closing pair is C(    36)-G(    91)
+Stack:		ddG =  -2.10 External closing pair is T(    37)-A(    90)
+Helix:		ddG = -21.40  13 base pairs.
+Interior loop:	ddG =  -0.70 External closing pair is G(    38)-C(    89)
+Stack:		ddG =  -3.30 External closing pair is C(    40)-G(    87)
+Stack:		ddG =  -2.10 External closing pair is C(    41)-G(    86)
+Stack:		ddG =  -2.20 External closing pair is A(    42)-T(    85)
+Stack:		ddG =  -2.10 External closing pair is C(    43)-G(    84)
+Stack:		ddG =  -2.10 External closing pair is T(    44)-A(    83)
+Stack:		ddG =  -2.20 External closing pair is G(    45)-C(    82)
+Stack:		ddG =  -1.30 External closing pair is T(    46)-A(    81)
+Stack:		ddG =  -2.10 External closing pair is A(    47)-T(    80)
+Stack:		ddG =  -2.40 External closing pair is G(    48)-C(    79)
+Stack:		ddG =  -2.10 External closing pair is A(    49)-T(    78)
+Stack:		ddG =  -2.20 External closing pair is G(    50)-C(    77)
+Helix:		ddG = -24.10  12 base pairs.
+Interior loop:	ddG =   4.40 External closing pair is T(    51)-A(    76)
+Stack:		ddG =  -1.40 External closing pair is G(    56)-T(    73)
+Stack:		ddG =  -1.30 External closing pair is T(    57)-A(    72)
+Helix:		ddG =  -2.70   3 base pairs.
+Interior loop:	ddG =  -2.10 External closing pair is A(    58)-T(    71)
+Stack:		ddG =  -1.00 External closing pair is T(    61)-G(    68)
+Helix:		ddG =  -1.00   2 base pairs.
+Hairpin loop:	ddG =   3.00          Closing pair is A(    62)-T(    67)
+
+Structure    2
+
+workingfile.txt                                   
+ Initial dG =    -54.40
+
+External loop:	ddG =  -0.50  36 ss bases &  1 closing helices.
+Stack:		ddG =  -1.30 External closing pair is T(    18)-A(   109)
+Stack:		ddG =  -1.10 External closing pair is A(    19)-T(   108)
+Stack:		ddG =  -2.10 External closing pair is T(    20)-A(   107)
+Stack:		ddG =  -3.40 External closing pair is G(    21)-C(   106)
+Stack:		ddG =  -2.10 External closing pair is C(    22)-G(   105)
+Stack:		ddG =  -1.30 External closing pair is T(    23)-A(   104)
+Helix:		ddG = -11.30   7 base pairs.
+Interior loop:	ddG =   1.10 External closing pair is T(    24)-G(   103)
+Stack:		ddG =  -2.10 External closing pair is C(    26)-G(   101)
+Stack:		ddG =  -1.30 External closing pair is T(    27)-A(   100)
+Stack:		ddG =  -2.20 External closing pair is A(    28)-T(    99)
+Stack:		ddG =  -2.10 External closing pair is C(    29)-G(    98)
+Stack:		ddG =  -1.30 External closing pair is T(    30)-A(    97)
+Stack:		ddG =  -0.90 External closing pair is A(    31)-T(    96)
+Stack:		ddG =  -0.90 External closing pair is A(    32)-T(    95)
+Stack:		ddG =  -0.90 External closing pair is A(    33)-T(    94)
+Stack:		ddG =  -2.10 External closing pair is A(    34)-T(    93)
+Stack:		ddG =  -3.40 External closing pair is G(    35)-C(    92)
+Stack:		ddG =  -2.10 External closing pair is C(    36)-G(    91)
+Stack:		ddG =  -2.10 External closing pair is T(    37)-A(    90)
+Helix:		ddG = -21.40  13 base pairs.
+Interior loop:	ddG =  -0.70 External closing pair is G(    38)-C(    89)
+Stack:		ddG =  -3.30 External closing pair is C(    40)-G(    87)
+Stack:		ddG =  -2.10 External closing pair is C(    41)-G(    86)
+Stack:		ddG =  -2.20 External closing pair is A(    42)-T(    85)
+Stack:		ddG =  -2.10 External closing pair is C(    43)-G(    84)
+Stack:		ddG =  -2.10 External closing pair is T(    44)-A(    83)
+Stack:		ddG =  -2.20 External closing pair is G(    45)-C(    82)
+Stack:		ddG =  -1.30 External closing pair is T(    46)-A(    81)
+Stack:		ddG =  -2.10 External closing pair is A(    47)-T(    80)
+Stack:		ddG =  -2.40 External closing pair is G(    48)-C(    79)
+Stack:		ddG =  -2.10 External closing pair is A(    49)-T(    78)
+Stack:		ddG =  -2.20 External closing pair is G(    50)-C(    77)
+Helix:		ddG = -24.10  12 base pairs.
+Bulge loop:	ddG =   5.90 External closing pair is T(    51)-A(    76)
+Stack:		ddG =  -2.10 External closing pair is T(    52)-A(    65)
+Stack:		ddG =  -3.40 External closing pair is G(    53)-C(    64)
+Stack:		ddG =  -2.10 External closing pair is C(    54)-G(    63)
+Stack:		ddG =  -1.00 External closing pair is T(    55)-A(    62)
+Helix:		ddG =  -8.60   5 base pairs.
+Hairpin loop:	ddG =   5.20          Closing pair is G(    56)-T(    61)

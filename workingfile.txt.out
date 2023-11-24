@@ -1,0 +1,28 @@
+
+Structure    1
+
+Folding bases      1 to    128 of workingfile.txt                                   
+ Initial dG =    -55.30
+
+        10          20        30        40        50        60    
+GAACATAAAGCCATTTT--|      A             T            TGCT   TG  G 
+                   TATGCTT CTACTAAAAGCTG CCACTGTAGAGT    GTA  TA C
+                   ATACGAG GATGATTTTCGAC GGTGACATCTCA    TAT  GT A
+TCTTCATAAAATAGTAAAA^      A             T            CC--   GT  A 
+      120       110       100        90        80          70     
+
+
+
+Structure    2
+
+Folding bases      1 to    128 of workingfile.txt                                   
+ Initial dG =    -54.40
+
+        10          20        30        40        50                  
+GAACATAAAGCCATTTT--       A             T            ----------|    T 
+                   TATGCTT CTACTAAAAGCTG CCACTGTAGAGT          TGCTG A
+                   ATACGAG GATGATTTTCGAC GGTGACATCTCA          ACGAT T
+TCTTCATAAAATAGTAAAA       A             T            CCTATGTGTA^    G 
+      120       110       100        90        80        70        60 
+
+
