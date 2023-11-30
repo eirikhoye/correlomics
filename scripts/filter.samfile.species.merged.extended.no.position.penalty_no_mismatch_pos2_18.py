@@ -24,21 +24,24 @@ Filtering keeps only the read or reads with the highest score.
 Outputs to 
 
 """
+indir = '/home/jcdenton/projects/smallRNAseq_sam/'
+outdir = '/home/jcdenton/projects/smallRNAseq_sam_filtered_no_mismatch_inside_pos_2_18/'
 
-for directory in os.listdir('mirgenedb_merged_extended_sam/'):
-	if not os.path.isdir('mirgenedb_merged_extended_sam/' + str(directory)):
+
+for directory in os.listdir(indir):
+	if not os.path.isdir(indir + str(directory)):
 		continue
-	if not os.path.exists('mirgenedb_merged_extended_sam_filtered_no_pos2_18_mismatch/'):
-		os.makedirs('mirgenedb_merged_extended_sam_filtered_no_pos2_18_mismatch/')
+	if not os.path.exists(outdir):
+		os.makedirs(outdir)
 	#if str(directory) in os.listdir('mirgenedb_merged_extended_sam_filtered/'):
 	#	continue
 	print(directory)
-	for filename in os.listdir('mirgenedb_merged_extended_sam/' + str(directory)):
+	for filename in os.listdir(indir + str(directory)):
 		if filename.endswith('.sam'):
 			print(filename)
 			readID = {}
 			refReads = {}
-			with open('mirgenedb_merged_extended_sam/' + str(directory) + '/' + str(filename)) as file:
+			with open(indir + str(directory) + '/' + str(filename)) as file:
 
 				for line in file:
 					if '@HD' in line:
@@ -123,11 +126,11 @@ for directory in os.listdir('mirgenedb_merged_extended_sam/'):
 
 #			readID = {k:v for k,v in readID.items() if v != 'remove'}
 
-			if not os.path.exists('mirgenedb_merged_extended_sam_filtered_no_pos2_18_mismatch/' + str(directory)):
-				os.makedirs('mirgenedb_merged_extended_sam_filtered_no_pos2_18_mismatch/' + str(directory))
-			with open('mirgenedb_merged_extended_sam_filtered_no_pos2_18_mismatch/' + str(directory) + '/' + str(filename) + '.filtered.sam', 'w') as outfile:
-				if not os.path.exists('mirgenedb_merged_extended_sam_filtered_no_pos2_18_mismatch/' + str(directory)):
-					os.makedirs('mirgenedb_merged_extended_sam_filtered_no_pos2_18_mismatch/' + str(directory))
+			if not os.path.exists(outdir + str(directory)):
+				os.makedirs(outdir + str(directory))
+			with open(outdir + str(directory) + '/' + str(filename) + '.filtered.sam', 'w') as outfile:
+				if not os.path.exists(outdir + str(directory)):
+					os.makedirs(outdir + str(directory))
 				outfile.write(header)
 				for key in refReads:
 					outfile.write(refReads[key])
