@@ -59,3 +59,7 @@ It is important to use standard naming conventions for package and module name, 
 
 
 
+TODO
+Continue the integration from mirgenedb_editing_events following the flow chart png. 
+
+Start a SnakeMake file and make compatible scripts for each prosessing step.

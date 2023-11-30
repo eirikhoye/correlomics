@@ -266,9 +266,9 @@ for directory in os.listdir(samdir):
     print(species_id)
     
     if os.path.isdir(outdir+str(directory)):
-	    for file in os.listdir(outdir+directory):
-	        if file.endswith('.csv'):
-	            os.remove(outdir+directory+'/'+file)
+        for file in os.listdir(outdir+directory):
+            if file.endswith('.csv'):
+                os.remove(outdir+directory+'/'+file)
     
     species_obj = Correlomics(species_id)
     print('nr_files: ',len(glob.glob(samdir + str(directory) + '/*.sam')))
