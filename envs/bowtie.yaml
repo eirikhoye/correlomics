@@ -1,0 +1,6 @@
+channels:
+  -conda-forge
+  -bioconda
+
+dependencies:
+  - bowtie = 1.0.0
