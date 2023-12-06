@@ -4,3 +4,4 @@ tmp/
 test_folds/
 notebooks/
 chatgpt_suggests/
+.snakemake/
