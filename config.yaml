@@ -1,0 +1,9 @@
+# path
+database : "/home/jcdenton/projects/mirgenedb_database/"
+prifile : "merged_all-pri-30-30.fas"
+ref : "mirgenedb_mature_star_genome/"
+extend_ref : "mirgenedb_merged_extended_genome/"
+bowtie_ref : "mirgenedb_merged_extended_reference/"
+seq_data : /home/jcdenton/projects/smallRNAseq/
+sam : "mirgenedb_merged_extended_sam/"
+filtered_no_pos_2_18_mis : "mirgenedb_merged_extended_sam_filtered_no_pos2_18_mismatch/"
