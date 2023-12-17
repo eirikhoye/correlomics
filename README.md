@@ -1,6 +1,6 @@
 Correlomics: uncovering microRNA editing and structural features based on reference and sequencing data.
 
-This is an in progress repository for the correlomics project where we explore novel miRNA features.
+This is an in development repository for the correlomics project where we explore novel miRNA features.
 
 Pipeline for smallRNA sequencing data. 
 
