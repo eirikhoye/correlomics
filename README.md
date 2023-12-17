@@ -18,15 +18,16 @@ Use two separate filtering methods for sam files, to filter for multiple read al
 - One selecting for mismatches OUTSIDE miRNA position 2-18
     - Used for analyzing the preferred read alignment position (0 is canonical start/end).
 
-- Parse samfiles Identify A to I editing events and merge all into a long format dataframe
+Parse samfiles Identify A to I editing events and merge all into a long format dataframe
 
-- 
+Parse samfiles to identify read start and end position
+
+Get unbiased foldings for all pri-miRNA sequences using mfold.
+- Check each fold to assess misfold, if yes then refold using successively stricter criteria until a "legal" fold is obtained.
+
+Use fold to search for sequential and structural motifs in the miRNA stem.
 
 ![Image](figures/flow_chart_editing_events.drawio.png) 
-
-
-
-
 
 TODO
 - Finish snakemake integration with mfold script
