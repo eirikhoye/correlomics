@@ -36,5 +36,7 @@ TODO
 - Update pipeline diagram in README.
 - Test on latest version of MirGeneDB with smallRNA-seq at SAGA.
 
-Visualisation of structural features across phyla, which may be involved in mature star strand selection:
+Visualisation of sequential and structural features across phyla, which may be involved in mature star strand selection:
+
+
 ![Image](figures/bulge_heatmap.jpg)
