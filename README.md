@@ -30,8 +30,8 @@ Use fold to search for sequential and structural motifs in the miRNA stem.
 ![Image](figures/flow_chart_editing_events.drawio.png) 
 
 TODO
-- Finish snakemake integration with mfold script
-- Add the A to I samfile parser to the main correlomics script
-- merge/remove redundant scripts
-- Update pipeline diagram in README
-- Test on latest version of MirGeneDB with smallRNA-seq at SAGA
+- Finish snakemake integration.
+- Add the A to I samfile parser to the main correlomics script.
+- merge/remove redundant scripts.
+- Update pipeline diagram in README.
+- Test on latest version of MirGeneDB with smallRNA-seq at SAGA.
