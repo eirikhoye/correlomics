@@ -1,4 +1,4 @@
-Correlomics:uncovering microRNA editing and structural features based on reference and sequencing data.
+Correlomics: uncovering microRNA editing and structural features based on reference and sequencing data.
 
 This is an in progress repository for the correlomics project where we explore novel miRNA features.
 
