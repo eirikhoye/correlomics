@@ -1,4 +1,4 @@
-#configfile: "config.yaml"
+configfile: "config.yaml"
 
 rule extend_mature_star_pre_ref:
     """
@@ -6,10 +6,10 @@ rule extend_mature_star_pre_ref:
     using precursors as reference
     """
     input:
-        "/home/jcdenton/projects/mirgenedb_database/merged_all-pri-30-30.fas",
-        "/home/jcdenton/projects/mirgenedb_database/mirgenedb_mature_star_genome/{species_id}.fas"
+        config['database'] + confif['prifile'],
+        config['database'] + config['ref'] + "{species_id}.fas"
     output:
-        "/home/jcdenton/projects/mirgenedb_database/mirgenedb_merged_extended_genome/{species_id}.fas"
+        config['database'] + config['extend_ref'] + "{species_id}.fas"
     conda:
         "envs/biopython.yaml"
     shell:
@@ -20,19 +20,19 @@ rule bowtie_reference_maker:
     Build bowtie references from extended MirGeneDB mature / star sequences
     """
     input:
-        "/home/jcdenton/projects/mirgenedb_database/mirgenedb_merged_extended_genome/{species_id}.fas"
+        config['database'] + config['extend_ref'] + "{species_id}.fas"
     output:
-        "/home/jcdenton/projects/mirgenedb_database/mirgenedb_merged_extended_reference/{species_id}.1.ebwt",
-        "/home/jcdenton/projects/mirgenedb_database/mirgenedb_merged_extended_reference/{species_id}.2.ebwt",
-        "/home/jcdenton/projects/mirgenedb_database/mirgenedb_merged_extended_reference/{species_id}.3.ebwt",
-        "/home/jcdenton/projects/mirgenedb_database/mirgenedb_merged_extended_reference/{species_id}.4.ebwt",
-        "/home/jcdenton/projects/mirgenedb_database/mirgenedb_merged_extended_reference/{species_id}.rev.1.ebwt",
-        "/home/jcdenton/projects/mirgenedb_database/mirgenedb_merged_extended_reference/{species_id}.rev.2.ebwt"
+        config['database'] + config['bowtie_ref'] + "{species_id}.1.ebwt",
+        config['database'] + config['bowtie_ref'] + "{species_id}.2.ebwt",
+        config['database'] + config['bowtie_ref'] + "{species_id}.3.ebwt",
+        config['database'] + config['bowtie_ref'] + "{species_id}.4.ebwt",
+        config['database'] + config['bowtie_ref'] + "{species_id}.rev.1.ebwt",
+        config['database'] + config['bowtie_ref'] + "{species_id}.rev.2.ebwt"
         
     conda:
         "envs/bowtie.yaml"
     shell:
-        "bowtie-build {input} /home/jcdenton/projects/mirgenedb_database/mirgenedb_merged_extended_reference/{wildcards.species_id}"
+        "bowtie-build {input} {config['database']}/mirgenedb_merged_extended_reference/{wildcards.species_id}"
 
 rule bowtie_mirgenedb_collapsed_species_merged_extended_v2:
     """
@@ -41,10 +41,27 @@ rule bowtie_mirgenedb_collapsed_species_merged_extended_v2:
     Outputs sam files.
     """
     input:
-        "/home/jcdenton/projects/smallRNAseq/{species_id}/{tissue_id}.fas"
+        reference = config['database'] + config['bowtie_ref'] + "{species_id}.1.ebwt",
+        fastafile = config['seq_data'] + {species_id}/{tissue_id}.fas"
+    params:
+        config['database'] + config['bowtie_ref'] + "{species_id}"
     output:
-        "/home/jcdenton/projects/mirgenedb_database/mirgenedb_merged_extended_sam/{species_id}/{tissue_id}.sam"
+        samfile = config['database'] + config['sam'] + "{species_id}/{tissue_id}.sam"
+    log:
+        config['database'] + config['sam'] + "log/{species_id}/{tissue_id}.log"
     conda:
         "envs/bowtie.yaml"
     shell:
-        "bowtie -f -k 10 --best --norc -v3 /home/jcdenton/projects/mirgenedb_database/mirgenedb_merged_extended_reference/{wildcards.species_id} {input} -S > {output} 2>> /home/jcdenton/projects/mirgenedb_database/mirgenedb_merged_extended_sam/{wildcards.species_id}/mirgenedb_{wildcards.species_id}.log"
+        "bowtie -f -k 10 --best --norc -v3 {params} {input.fastafile} -S > {output.samfile} 2> {log}"
+
+rule filter_samfile:
+    input:
+        samfile = config['database'] + config['sam'] + "{species_id}/{tissue_id}.sam"
+    output:
+        filtered = config['database'] + config["filtered_no_pos_2_18_mis"] + "{species_id}/{tissue_id}_filtered.sam"
+    conda:
+        "envs/biopython.yaml"
+    shell:
+        "python scripts/filter.samfile.species.merged.extended.no.position.penalty_no_mismatch_pos2_18.py {input.samfile} {output.filtered}"
+
+
