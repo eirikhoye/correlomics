@@ -34,6 +34,7 @@ class Correlomics():
 		self.star_pos_dict   = {key : self.exact_match(str(self.star_dict[key].seq),   str(self.star_ext[key].seq)) for key, value in self.star_dict.items() if key in self.star_ext}
         
 	def start_pos(self, RNAME):
+		"""Get read start position"""
 		gene_name = RNAME.split('_')[0]
 		start_5p, start_3p = 999, 999 # set to this value if no annotated star, reconsider
 		if gene_name+'_5p' in self.mature_pos_dict.keys() and gene_name+'_3p' in self.mature_pos_dict.keys():
@@ -45,6 +46,7 @@ class Correlomics():
 		return [start_5p, start_3p]
     
 	def end_pos(self, RNAME):
+		"""Get read end position"""
 		gene_name = RNAME.split('_')[0]
 		start_5p, start_3p = 999, 999 # set to this value if no annotated star, reconsider
 		if gene_name+'_5p' in self.mature_pos_dict.keys() and gene_name+'_3p' in self.mature_pos_dict.keys():
@@ -56,6 +58,7 @@ class Correlomics():
 		return [start_5p, start_3p]
 
 	def exact_match(self, p, t):
+		"""Function to identify start and end position of read to reference"""
 		start = 0
 		p = p.replace('U', 'T')
 		t = t.replace('U', 'T')
@@ -81,13 +84,8 @@ class Correlomics():
 			return('read_5p')
 		if RNAME.endswith('_3p') or RNAME.endswith('_3p*'):
 			return('read_3p')
-		#if abs(diff_3p_start) < abs(diff_5p_start):
-		#	return('read_3p')
-		#else:
-		#	return('read_5p')
         
 	def get_read_end(self, read_side, canon_5p_start, canon_3p_start, read_start, read_len, canon_5p_end, canon_3p_end):
-		#print(read_side, canon_5p_start, canon_3p_start, read_start, read_len, canon_5p_end, canon_3p_end)
 		if read_side == 'read_5p':
 			return(canon_5p_start + read_start + read_len - canon_5p_end)
 		if read_side == 'read_3p':
@@ -208,10 +206,6 @@ class Correlomics():
 		self.df['diff_3p_start']  = self.df.POS - self.df.canon_3p_start
 		self.df['read_side']      = list(map(self.is_5p_or_3p, self.df.RNAME))
 		self.df['read_start']     = list(map(self.abs_min, self.df.diff_5p_start, self.df.diff_3p_start, self.df.read_side))
-		#self.df['read_5p_end']    = self.df.canon_5p_start + self.df.read_start + self.df.read_len
-		#self.df['read_3p_end']    = self.df.canon_3p_start + self.df.read_start + self.df.read_len
-		#self.df['diff_5p_end']    = self.df.canon_5p_end - self.df.read_5p_end
-		#self.df['diff_3p_end']    = self.df.canon_3p_end - self.df.read_3p_end
 		self.df['read_end']       = list(map(self.get_read_end, self.df.read_side, self.df.canon_5p_start, self.df.canon_3p_start, self.df.read_start, self.df.read_len, self.df.canon_5p_end, self.df.canon_3p_end))
 		self.df['mature_star']    = list(map(self.mature_star, self.df.RNAME))
 		self.df['counts']         = [int(x.split('-')[1]) for x in self.df.QNAME]
@@ -247,7 +241,8 @@ class Correlomics():
 		self.df['Star_total']   = self.count_total_reads('Star')
 
 
-# Loop over sams TO BE CONVERTED TO SNAKEMAKE!
+# Loop over sams 
+# ### Should instead be snakemake compatible script running individual samfiles, followed by aggregating rule.
 
 samdir = 'mirgenedb_merged_extended_sam_filtered_no_pos2_18_mismatch/'
 outdir = 'aligned_positions_extended_mature/'

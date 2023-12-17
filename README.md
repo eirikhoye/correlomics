@@ -1,4 +1,6 @@
-Correlomics:uncovering microRNA editing and structural features based on reference and sequencing data
+Correlomics:uncovering microRNA editing and structural features based on reference and sequencing data.
+
+This is an in progress repository for the correlomics project where we explore novel miRNA features.
 
 Pipeline for smallRNA sequencing data. 
 
@@ -16,6 +18,9 @@ Use two separate filtering methods for sam files, to filter for multiple read al
 - One selecting for mismatches OUTSIDE miRNA position 2-18
     - Used for analyzing the preferred read alignment position (0 is canonical start/end).
 
+- Parse samfiles Identify A to I editing events and merge all into a long format dataframe
+
+- 
 
 ![Image](figures/flow_chart_editing_events.drawio.png) 
 
@@ -25,6 +30,7 @@ Use two separate filtering methods for sam files, to filter for multiple read al
 
 TODO
 - Finish snakemake integration with mfold script
-- Merge all reduntant scripts
-- Update pipeline diagram
+- Add the A to I samfile parser to the main correlomics script
+- merge/remove redundant scripts
+- Update pipeline diagram in README
 - Test on latest version of MirGeneDB with smallRNA-seq at SAGA
