@@ -7,3 +7,7 @@ bowtie_ref : "mirgenedb_merged_extended_reference/"
 seq_data : /home/jcdenton/projects/smallRNAseq/
 sam : "mirgenedb_merged_extended_sam/"
 filtered_no_pos_2_18_mis : "mirgenedb_merged_extended_sam_filtered_no_pos2_18_mismatch/"
+filtered_no_outside_pos_2_18_mis : "mirgenedb_merged_extended_sam_filtered_no_outside_pos2_18_mismatch/"
+species_dict : "species_dict.txt"
+editing_events : 'counted_mismatches/'
+

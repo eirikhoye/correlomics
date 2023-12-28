@@ -6,96 +6,39 @@ import pandas as pd
 import numpy as np
 import os
 import re
+import json
 
-# Make dictionary of species names and abreviations used in MirGeneDB
-species_names = {
- "Hsa" : "Human", 
- "Mmu" : "Mouse", 
- "Rno" : "Rat", 
- "Cpo" : "Guinea_Pig", 
- "Ocu" : "Rabbit", 
- "Dno" : "Armadillo", 
- "Gga" : "Chicken", 
- "Dre" : "Zebrafish", 
- "Mml" : "Rhesus_monkey", 
- "Cfa" : "Dog", 
- "Bta" : "Cow", 
- "Ete" : "Lesser_hedgehog_tenrec", 
- "Cli" : "Rock_pigeon", 
- "Ami" : "American_aligator", 
- "Cpi" : "Western_painted_turtle", 
- "Aca" : "Green_anole_lizard", 
- "Xtr" : "Tropical_clawed_frog", 
- "Bfl" : "Florida_lancet", 
- "Sko" : "Acorn_worm", 
- "Spu" : "Purple_sea_urchin", 
- "Dme" : "Fruit_fly_Dme", 
- "Dmo" : "Fruit_flu_Dmo",
- "Dan" : "Fruit_fly_Dan",
- "Dpu" : "Common_water_flea", 
- "Isc" : "Black-legged_tick", 
- "Cel" : "Roundworm_Cel", 
- "Lgi" : "Owl_limpet", 
- "Cgi" : "Pacific_oyster", 
- "Cte" : "Polychaete_worm", 
- "Efe" : "Common_brandling_worm", 
- "Pmi" : "Bar_starfish", 
- "Tca" : "Red flour beetle", 
- "Asu" : "Large roundworm", 
- "Pfl" : "Acorn worm 2", 
- "Mdo" : "Opossum", 
- "Sha" : "Tasmanian devil",
- "Aae" : "Yellow fever mosquito",
- "Hme" : "Longwing",
- "Bge" : "Cockroach",
- "Cbr" : "Roundworm_Cbr",
- "Lan" : "Lingula",
- "Cin" : "Sea Squirt",
- "Tgu" : "Zebra finch",
- "Oan" : "Platypus",
- "Sto" : "Cloudy Catshark",
- "Aqu" : "Amphimedon",
- "Bla" : "European lancet",
- "Cmi" : "Australian ghostshark",
- "Dsi" : "Fruit_fly_Dsi",
- "Dya" : "Fruit_fly_Dya",
- "Ebu" : "Inshore hagfish",
- "Emu" : "Muellers freshwater sponge",
- "Gja" : "Schlegels Japanese gecko",
- "Gmo" : "Cod",
- "Hvu" : "Freshwater-polyp",
- "Lch" : "Coelacanth",
- "Loc" : "Spotted gar",
- "Lpo" : "Atlantic horseshoe crab",
- "Mal" : "Asian swamp eel",
- "Mun" : "Microcaecelia",
- "Nve" : "Starlet sea anemone",
- "Pbv" : "Burmese python",
- "Pma" : "Sea Lamprey",
- "Spt" : "Tuatara",
- "Tni" : "Pufferfish",
- "Xla" : "African clawed Frog",
- "Csc" : "Arizona bark skorpion",
- "Obi" : "California two-spot octopus",
- "Ovu" : "Common octopus",
- "Bpl" : "Rotifer",
- "Dma" : "Large commom water flea",
- "Esc" : "Hawaiian bobtail squid",
- "Npo" : "Chambered Nautilus",
- "Sme" : "Freshwater planarian",
- "Xbo" : "Xenoturbella"
-}
+"""
+Load files from command line arguments
+"""
 
-reference_seq_dict = {}
+# Dictionary of species names and their abbreviated ID in the fasta files
+species_dict = sys.argv[1]
+with open(species_dict, 'r') as f:
+    data = f.read()
+species_names = json.loads(data)
 
-for file in os.listdir('mirgenedb_merged_extended_genome/'):
-    if file.endswith('.fas'):
-        record_dict  = SeqIO.to_dict(SeqIO.parse('mirgenedb_merged_extended_genome/' + file, 'fasta'))
-        species_name = species_names[file.split('.')[0].capitalize()]
-        reference_seq_dict[species_name] = record_dict 
+# Reference fasta of extended mature/stars
+ref = sys.argv[2]
+ref_seq = SeqIO.to_dict(SeqIO.parse(ref, 'fasta'))
 
-def fetch_mismatch(read_start, y, mismatch_pos, n, mirna, species, sequence):
-    canon_seq = reference_seq_dict[species][mirna].seq[5:-5]
+# The sam file to assess editing events
+sam_file = sys.argv[3]
+
+# csv file path
+out_file = sys.argv[4]
+
+species_id = sys.argv[5]
+tissue_name = sys.argv[6]
+
+
+
+"""
+Define functions
+"""
+
+def fetch_mismatch(read_start, y, mismatch_pos, n, mirna, sequence):
+    canon_seq = ref_seq[mirna].seq[5:-5]
     read_seq  = sequence
     if len(read_seq) > len(canon_seq):
         overhang_len = len(read_seq) - len(canon_seq)
@@ -161,9 +104,9 @@ def parse_sam(file, species, tissue):
     sam_df['nr_mismatches'] = pd.Series(map(lambda x : int(x.split(':')[2]), sam_df['NM:i:#']))
     sam_df['mismatch_pos']  = pd.Series(map(lambda x : re.split('(\d+)', x), sam_df['MD:mis_pos']))
     sam_df['y']             = pd.Series(map(lambda x : [0] * x, sam_df['nr_mismatches']))
-    sam_df['from_to_1']     = pd.Series(map(lambda read_start, y, mismatch_pos, mirna, sequence: fetch_mismatch(read_start, y, mismatch_pos, 1, mirna, species, sequence), sam_df['read_start'], sam_df['y'], sam_df['mismatch_pos'], sam_df['miRNA'], sam_df['read_seq']))
-    sam_df['from_to_2']     = pd.Series(map(lambda read_start, y, mismatch_pos, mirna, sequence: fetch_mismatch(read_start, y, mismatch_pos, 2, mirna, species, sequence), sam_df['read_start'], sam_df['y'], sam_df['mismatch_pos'], sam_df['miRNA'], sam_df['read_seq']))
-    sam_df['from_to_3']     = pd.Series(map(lambda read_start, y, mismatch_pos, mirna, sequence: fetch_mismatch(read_start, y, mismatch_pos, 3, mirna, species, sequence), sam_df['read_start'], sam_df['y'], sam_df['mismatch_pos'], sam_df['miRNA'], sam_df['read_seq']))
+    sam_df['from_to_1']     = pd.Series(map(lambda read_start, y, mismatch_pos, mirna, sequence: fetch_mismatch(read_start, y, mismatch_pos, 1, mirna, sequence), sam_df['read_start'], sam_df['y'], sam_df['mismatch_pos'], sam_df['miRNA'], sam_df['read_seq']))
+    sam_df['from_to_2']     = pd.Series(map(lambda read_start, y, mismatch_pos, mirna, sequence: fetch_mismatch(read_start, y, mismatch_pos, 2, mirna, sequence), sam_df['read_start'], sam_df['y'], sam_df['mismatch_pos'], sam_df['miRNA'], sam_df['read_seq']))
+    sam_df['from_to_3']     = pd.Series(map(lambda read_start, y, mismatch_pos, mirna, sequence: fetch_mismatch(read_start, y, mismatch_pos, 3, mirna, sequence), sam_df['read_start'], sam_df['y'], sam_df['mismatch_pos'], sam_df['miRNA'], sam_df['read_seq']))
     sam_df = sam_df[['ID', 'nr_reads', 'miRNA', 'arm', 'mature_star', 'species', 'tissue', 'read_start', 'read_seq', 'from_to_1', 'from_to_2', 'from_to_3']]
     return(sam_df)
 
@@ -185,6 +128,51 @@ def split_edit_from_to(mismatch):
     edit_from = mismatch.split('to')[0]
     edit_to   = mismatch.split('to')[1].split('_')[0]
     return edit_from, edit_to
+
+df = parse_sam(file = sam_file, species=species_names[species_id.capitalize()], tissue = tissue_name)
+df.to_csv(out_file, sep = '\t')
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""
+
+
+
 
 
 # Loop through species directories, and merge all samfiles into one pandas dataframe, written to .csv
@@ -300,3 +288,5 @@ for filename in os.listdir('mirgenedb_mismatch_df_directory/'):
     # Write the .csv file to specified directory
     print('\twriting ' + str('mirgenedb_collapsed_mismatch_by_tissue_df_directory/' + filename.split('_')[0] + '_collapsed_mismatch_by_tissue_df.csv'))
     df.to_csv('mirgenedb_collapsed_mismatch_by_tissue_df_directory/' + filename.split('_')[0] + '_collapsed_mismatch_by_tissue_df.csv', sep='\t')
+
+"""

@@ -6,7 +6,7 @@ rule extend_mature_star_pre_ref:
     using precursors as reference
     """
     input:
-        config['database'] + confif['prifile'],
+        config['database'] + config['prifile'],
         config['database'] + config['ref'] + "{species_id}.fas"
     output:
         config['database'] + config['extend_ref'] + "{species_id}.fas"
@@ -42,7 +42,7 @@ rule bowtie_mirgenedb_collapsed_species_merged_extended_v2:
     """
     input:
         reference = config['database'] + config['bowtie_ref'] + "{species_id}.1.ebwt",
-        fastafile = config['seq_data'] + {species_id}/{tissue_id}.fas"
+        fastafile = config['seq_data'] + "{species_id}/{tissue_id}.fas"
     params:
         config['database'] + config['bowtie_ref'] + "{species_id}"
     output:
@@ -54,14 +54,35 @@ rule bowtie_mirgenedb_collapsed_species_merged_extended_v2:
     shell:
         "bowtie -f -k 10 --best --norc -v3 {params} {input.fastafile} -S > {output.samfile} 2> {log}"
 
-rule filter_samfile:
+rule filter_samfile_no_internal_mismatch:
     input:
-        samfile = config['database'] + config['sam'] + "{species_id}/{tissue_id}.sam"
+        config['database'] + config['sam'] + "{species_id}/{tissue_id}.sam"
     output:
-        filtered = config['database'] + config["filtered_no_pos_2_18_mis"] + "{species_id}/{tissue_id}_filtered.sam"
+        config['database'] + config["filtered_no_pos_2_18_mis"] + "{species_id}/{tissue_id}_filtered.sam"
     conda:
         "envs/biopython.yaml"
     shell:
-        "python scripts/filter.samfile.species.merged.extended.no.position.penalty_no_mismatch_pos2_18.py {input.samfile} {output.filtered}"
+        "python scripts/filter.samfile.species.merged.extended.no.position.penalty_no_mismatch_pos2_18.py {input} {output}"
 
+rule filter_samfile_only_internal_mismatch:
+    input:
+        config['database'] + config['sam'] + "{species_id}/{tissue_id}.sam"
+    output:
+        config['database'] + config["filtered_no_outside_pos_2_18_mis"] + "{species_id}/{tissue_id}_filtered.sam"
+    conda:
+        "envs/biopython.yaml"
+    shell:
+        "python scripts/filter.samfile.species.merged.extended.no.position.penalty_no_mismatch_outside_pos2_18.py {input} {output}"
+
+rule count_editing_events:
+    input:
+        config['species_dict'],
+        config['database'] + config["extend_ref"] + "{species_id}.fas",   
+        config['database'] + config["filtered_no_outside_pos_2_18_mis"] + "{species_id}/{tissue_id}_filtered.sam"
+    output:
+        config['database'] + config['editing_events'] + '{species_id}/{tissue_id}_editing_events.csv'
+    conda:
+        "envs/biopython.yaml"
+    shell:
+        "python scripts/samfile.all.nucleotides.edit.counter.mirna.py {input} {output} {wildcards.species_id} {wildcards.tissue_id}"
 

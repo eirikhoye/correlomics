@@ -3,3 +3,8 @@ channels:
 
 dependencies:
   - biopython = 1.76
+  - matplotlib
+  - pandas
+  - numpy
+  - json
+  

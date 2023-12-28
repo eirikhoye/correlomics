@@ -22,11 +22,11 @@ Filtering is score based, with the following criteria:
 Filtering keeps only the read or reads with the highest score.
 
 Outputs to 
-
+mirgenedb_merged_extended_sam_filtered_no_outside_pos2_18_mismatch
 """
+
 input_file = sys.argv[1]
 output_file = sys.argv[2]
-
 
 readID = {}
 refReads = {}
@@ -110,6 +110,8 @@ for key in readID:
 	readID[key] = topread
 	if mismatch_in_seed == True:
 		readID[key] = ''
+
+#			readID = {k:v for k,v in readID.items() if v != 'remove'}
 
 with open(output_file, 'w') as outfile:
 	outfile.write(header)
