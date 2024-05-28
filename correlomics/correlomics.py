@@ -1,102 +1,114 @@
-import matplotlib.pyplot as plt
 import pandas as pd
-import numpy as np
-from Bio.SeqIO.FastaIO import SimpleFastaParser
-import seaborn as sns
-import matplotlib.pyplot as plt
-import os
 from subprocess import *
 from Bio import SeqIO
-import matplotlib.gridspec as gridspec
-from matplotlib.colors import LinearSegmentedColormap
-import math
-import copy
 import json
 import glob
+import os
 
 class Correlomics():
 	def __init__(self, species):
-		"""Initialize the class with the species name, and parse the reference files"""
+		"""
+		Initialize the class with the species name,
+		and parse the reference files
+		"""
 		self.species = species
+		species_names = self.load_species_dict()
+		self.reference('data/fasta/prifile.fasta',
+						'data/fasta/mature_extended.fas',
+						'data/fasta/star_extended_fake_451.fas',
+						'data/fasta/mature.fasta',
+						'data/fasta/starfile_fake_451.fasta', self.species)
+
+
+	def load_species_dict(self):
+		"""Load species dictionary from file"""
 		with open('species_dict.txt') as f:
 			data = f.read()
-		species_names = json.loads(data)
-		self.reference('data/fasta/prifile.fasta', 'data/fasta/mature_extended.fas', 'data/fasta/star_extended_fake_451.fas', 'data/fasta/mature.fasta', 'data/fasta/starfile_fake_451.fasta', self.species)
+		return json.loads(data)
+
 
 	def reference(self, pri_ref, mature_ext, star_ext, mature_ref, star_ref, species):
 		"""Parses the reference files and stores them as class attributes"""
-		self.pri_dict        = {key:value for (key,value) in SeqIO.to_dict(SeqIO.parse(open(pri_ref,    'r'), 'fasta')).items() if key.startswith(self.species)}
-		self.mature_ext      = {key:value for (key,value) in SeqIO.to_dict(SeqIO.parse(open(mature_ext, 'r'), 'fasta')).items() if key.startswith(self.species)}
-		self.star_ext        = {key:value for (key,value) in SeqIO.to_dict(SeqIO.parse(open(star_ext,   'r'), 'fasta')).items() if key.startswith(self.species)}
-		self.mature_dict     = {key:value for (key,value) in SeqIO.to_dict(SeqIO.parse(open(mature_ref, 'r'), 'fasta')).items() if key.startswith(self.species)}
-		self.star_dict       = {key:value for (key,value) in SeqIO.to_dict(SeqIO.parse(open(star_ref,   'r'), 'fasta')).items() if key.startswith(self.species)}
-		self.mature_pos_dict = {key : self.exact_match(str(self.mature_dict[key].seq), str(self.mature_ext[key].seq)) for key, value in self.mature_dict.items() if key in self.mature_ext}
-		self.star_pos_dict   = {key : self.exact_match(str(self.star_dict[key].seq),   str(self.star_ext[key].seq)) for key, value in self.star_dict.items() if key in self.star_ext}
-        
+		self.pri_dict = self._parse_fasta(pri_ref)
+		self.mature_ext = self._parse_fasta(mature_ext)
+		self.star_ext = self._parse_fasta(star_ext)
+		self.mature_dict = self._parse_fasta(mature_ref)
+		self.star_dict = self._parse_fasta(star_ref)
+		self.mature_pos_dict = self._get_sequence_matches(self.mature_dict, self.mature_ext)
+		self.star_pos_dict = self._get_sequence_matches(self.star_dict, self.star_ext)
+
+
+	def _parse_fasta(self, file_path):
+		"""Parse FASTA file and return a dictionary"""
+		return {key: value for (key, value) in SeqIO.to_dict(SeqIO.parse(open(file_path, 'r'), 'fasta')).items() if key. startswith(self.species)}
+
+
+	def _get_sequence_matches(self, ref_dict, ext_dict):
+		"""Find exact matches between reference and extended sequences"""
+		return {key: self.exact_match(str(ref_dict[key].seq), str(ext_dict[key].seq)) for key in ref_dict if key in ext_dict}
+
+
 	def start_pos(self, RNAME):
 		"""Get read start position"""
 		gene_name = RNAME.split('_')[0]
 		start_5p, start_3p = 999, 999 # set to this value if no annotated star, reconsider
-		if gene_name+'_5p' in self.mature_pos_dict.keys() and gene_name+'_3p' in self.mature_pos_dict.keys():
+		if gene_name+'_5p' in self.mature_pos_dict.keys() and gene_name+'_3p' in self.mature_pos_dict.keys():  # 5p mature
 			start_5p, start_3p = self.mature_pos_dict[gene_name+'_5p']['start'], self.mature_pos_dict[gene_name+'_3p']['start']
-		elif gene_name+'_5p' in self.mature_pos_dict.keys() and gene_name+'_3p*' in self.star_pos_dict.keys():
+		elif gene_name+'_5p' in self.mature_pos_dict.keys() and gene_name+'_3p*' in self.star_pos_dict.keys(): # 3p mature
 			start_5p, start_3p = self.mature_pos_dict[gene_name+'_5p']['start'], self.star_pos_dict[gene_name+'_3p*']['start']
-		elif gene_name+'_3p' in self.mature_pos_dict.keys() and gene_name+'_5p*' in self.star_pos_dict.keys():
+		elif gene_name+'_3p' in self.mature_pos_dict.keys() and gene_name+'_5p*' in self.star_pos_dict.keys(): # co-mature
 			start_3p, start_5p = self.mature_pos_dict[gene_name+'_3p']['start'], self.star_pos_dict[gene_name+'_5p*']['start']
 		return [start_5p, start_3p]
-    
+
+
 	def end_pos(self, RNAME):
 		"""Get read end position"""
 		gene_name = RNAME.split('_')[0]
 		start_5p, start_3p = 999, 999 # set to this value if no annotated star, reconsider
-		if gene_name+'_5p' in self.mature_pos_dict.keys() and gene_name+'_3p' in self.mature_pos_dict.keys():
+		if gene_name+'_5p' in self.mature_pos_dict.keys() and gene_name+'_3p' in self.mature_pos_dict.keys():  # 5p mature
 			start_5p, start_3p = self.mature_pos_dict[gene_name+'_5p']['end'], self.mature_pos_dict[gene_name+'_3p']['end']
-		elif gene_name+'_5p' in self.mature_pos_dict.keys() and gene_name+'_3p*' in self.star_pos_dict.keys():
+		elif gene_name+'_5p' in self.mature_pos_dict.keys() and gene_name+'_3p*' in self.star_pos_dict.keys(): # 3p mature
 			start_5p, start_3p = self.mature_pos_dict[gene_name+'_5p']['end'], self.star_pos_dict[gene_name+'_3p*']['end']
-		elif gene_name+'_3p' in self.mature_pos_dict.keys() and gene_name+'_5p*' in self.star_pos_dict.keys():
+		elif gene_name+'_3p' in self.mature_pos_dict.keys() and gene_name+'_5p*' in self.star_pos_dict.keys(): # co-mature
 			start_3p, start_5p = self.mature_pos_dict[gene_name+'_3p']['end'], self.star_pos_dict[gene_name+'_5p*']['end']
 		return [start_5p, start_3p]
 
-	def exact_match(self, p, t):
+
+	def exact_match(self, pattern, text):
 		"""Function to identify start and end position of read to reference"""
-		start = 0
-		p = p.replace('U', 'T')
-		t = t.replace('U', 'T')
-		for i in range(len(t) - len(p) + 1):
-			match = True
-			for j in range(len(p)):
-				if t[i+j] != p[j]:
-					match = False
-					break
-			if match:
-				start = i + 1
-		end = start + len(p)
-		return({'start' : start, 'end' : end})
-    
+		pattern = pattern.replace('U', 'T')
+		text = text.replace('U', 'T')
+		start = text.find(pattern) + 1
+		end = start + len(pattern)
+		return {'start': start, 'end': end}
+
+
 	def abs_min(self, x, y, read_side):
-		if read_side == 'read_5p':
-			return(x)
-		if read_side == 'read_3p':
-			return(y)
-        
+		"""Get the absolute minimum value based on the read side"""
+		return x if read_side == 'read_5p' else y
+
+
 	def is_5p_or_3p(self, RNAME):
+		"""Check if the read is 5p or 3p"""
 		if RNAME.endswith('_5p') or RNAME.endswith('_5p*'):
 			return('read_5p')
 		if RNAME.endswith('_3p') or RNAME.endswith('_3p*'):
 			return('read_3p')
-        
+
+
 	def get_read_end(self, read_side, canon_5p_start, canon_3p_start, read_start, read_len, canon_5p_end, canon_3p_end):
+		"""Calculate the read end position based on the read side"""
 		if read_side == 'read_5p':
 			return(canon_5p_start + read_start + read_len - canon_5p_end)
 		if read_side == 'read_3p':
 			return(canon_3p_start + read_start + read_len - canon_3p_end)
 
+
 	def mature_star(self, RNAME):
-		if RNAME.endswith('*'):
-			return('star')
-		else:
-			return('mature')
-        
+		"""Determine if the sequence is a mature miRNA or a star sequence"""
+		return 'star' if RNAME.endswith('*') else 'mature'
+
+
 	def add_counts(self, i, mature_or_star, start_or_end, mature_star, read_start, read_end, counts):
 		if read_start == i and mature_star == mature_or_star and start_or_end == 'start':
 			return(counts)
@@ -104,40 +116,35 @@ class Correlomics():
 			return(counts)
 		else:
 			return(0)
-        
-	def get_canon_mature_seq(self, gene_name, read_side, mature_star):
-		if read_side == 'read_5p' and mature_star == 'mature':
-			return(str(self.mature_dict[gene_name + '_5p'].seq))
-		if read_side == 'read_3p' and mature_star == 'mature':
-			return(str(self.mature_dict[gene_name + '_3p'].seq))
-		if read_side == 'read_5p' and mature_star == 'star':
-			return(str(self.mature_dict[gene_name + '_3p'].seq))
-		if read_side == 'read_3p' and mature_star == 'star':
-			return(str(self.mature_dict[gene_name + '_5p'].seq))
-    
-	def get_canon_star_seq(self, gene_name, read_side, mature_star):
-		if read_side == 'read_5p' and mature_star == 'mature' and gene_name + '_3p*' in self.star_dict.keys():
-			return(str(self.star_dict[gene_name + '_3p*'].seq))
-		if read_side == 'read_3p' and mature_star == 'mature' and gene_name + '_5p*' in self.star_dict.keys():
-			return(str(self.star_dict[gene_name + '_5p*'].seq))
-		if read_side == 'read_5p' and mature_star == 'star' and gene_name + '_5p*' in self.star_dict.keys():
-			return(str(self.star_dict[gene_name + '_5p*'].seq))
-		if read_side == 'read_3p' and mature_star == 'star' and gene_name + '_3p*' in self.star_dict.keys():
-			return(str(self.star_dict[gene_name + '_3p*'].seq))
 
-	def get_canon_type(self, read_side, mature_star, gene_name):
+
+	def get_canon_mature_seq(self, gene_name, read_side, mature_star):
+		"""Get canonical mature"""
+		if read_side == 'read_5p':
+			return str(self.mature_dict[gene_name + '_5p'].seq) if mature_star == 'mature' else str(self.mature_dict[gene_name + '_3p'].seq)
+		elif read_side == 'read_3p':
+			return str(self.mature_dict[gene_name + '_3p'].seq) if mature_star == 'mature' else str(self.mature_dict[gene_name + '_5p'].seq)
+
+
+	def get_canon_star_seq(self, gene_name, read_side, mature_star):
+		"""Get canonical star sequence"""
+		if read_side == 'read_5p':
+			return str(self.star_dict[gene_name + '_3p*'].seq) if mature_star == 'mature' else str(self.star_dict[gene_name + '_5p*'].seq)
+		elif read_side == 'read_3p':
+			return str(self.star_dict[gene_name + '_5p*'].seq) if mature_star == 'mature' else str(self.star_dict[gene_name + '_3p*'].seq)
+
+
+	def get_canon_type(self,read_side, mature_star, gene_name):
+		"""Annotate 5p, 3p or co-mature"""
 		type_ = ''
-		if read_side == 'read_5p' and mature_star == 'mature':
-			type_ = 'mature_5p'
-		if read_side == 'read_3p' and mature_star == 'mature':
-			type_ = 'mature_3p'
-		if read_side == 'read_5p' and mature_star == 'star':
-			type_ = 'mature_3p'
-		if read_side == 'read_3p' and mature_star == 'star':
-			type_ = 'mature_5p'
-		if gene_name+'_5p'in self.mature_dict.keys() and gene_name+'_3p' in self.mature_dict.keys():
+		if read_side == 'read_5p':
+			type_ = 'mature_5p' if mature_star == 'mature' else 'mature_3p'
+		elif read_side == 'read_3p':
+			type_ = 'mature_3p' if mature_star == 'mature' else 'mature_5p'
+		if gene_name + '_5p' in self.mature_dict and gene_name + '_3p' in self.mature_dict:
 			type_ = 'co_mature'
-		return(type_)
+		return type_
+
 
 	def add_zero_rows(self, tissue):
 		non_counted_genes = [gene_name[:-4] for gene_name in self.pri_dict.keys() if gene_name[:-4] not in self.df.Gene_name.values]
@@ -172,12 +179,13 @@ class Correlomics():
 						'Star_End_0': 0 , 'Star_End_1': 0 , 'Star_End_2': 0 , 'Star_End_3': 0 , 'Star_End_4': 0 ,
 						'Star_End_5': 0 
 						}, ignore_index=True)
-        
+
+
 	def count_total_reads(self, mature_star):
 		colnames = [mature_star+'_Start_'+str(i) for i in range(-5, 5 + 1)]
 		return(self.df[colnames].sum(axis=1))
-        
-    
+
+
 	def sam2df(self, file_path):
 		"""
 		Convert a samfile into a pandas dataframe

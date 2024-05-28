@@ -1,0 +1,112 @@
+# Snakefile
+
+# Load configuration
+configfile: "config.yaml"
+database = config['database']
+seq_data = config['seq_data']
+species_dict = config['species_dict']
+pri_file = config['prifile']
+ref_dir = config['ref']
+extend_ref_dir = config['extend_ref']
+bowtie_ref_dir = config['bowtie_ref']
+sam_dir = config['sam']
+filtered_no_pos_2_18_mis_dir = config["filtered_no_pos_2_18_mis"]
+filtered_no_outside_pos_2_18_mis_dir = config["filtered_no_outside_pos_2_18_mis"]
+editing_events_dir = config['editing_events']
+editing_events_aggregated_dir = config['editing_events_aggregated']
+
+bowtie_ref_trail = ["1", "2", "3", "4", "rev.1", "rev.2"]
+
+# Rule: Extend mature and star sequences with 5nt 5p and 3p
+rule extend_mature_star_pre_ref:
+    """
+    Extend all MirGeneDB mature and star sequences with 5nt 5p and 3p, using precursors as reference
+    """
+    input:
+        database + pri_file,
+        database + ref_dir + "{species_id}.fas"
+    output:
+        database + extend_ref_dir + "{species_id}.fas"
+    conda:
+        "envs/biopython.yaml"
+    shell:
+        "python scripts/reference_extended_mature_star_maker.py {input} {output}"
+
+# Rule: Build bowtie references from extended MirGeneDB mature/star sequences
+rule bowtie_reference_maker:
+    """
+    Build bowtie references from extended MirGeneDB mature/star sequences
+    """
+    input:
+        database + extend_ref_dir + "{species_id}.fas"
+    output:
+        expand(database + bowtie_ref_dir + "{species_id}.{i}.ebwt", i=bowtie_ref_trail)
+    conda:
+        "envs/bowtie.yaml"
+    shell:
+        "bowtie-build {input} {database}/mirgenedb_merged_extended_reference/{wildcards.species_id}"
+
+# Rule: Map collapsed smallRNA-seq fasta files to MirGeneDB extended mature/star bowtie reference
+rule bowtie_mirgenedb_collapsed_species_merged_extended_v2:
+    """
+    Maps collapsed smallRNA-seq fasta files to MirGeneDB extended mature/star bowtie reference
+    """
+    input:
+        reference = expand(database + bowtie_ref_dir + "{species_id}.{i}.ebwt", i=bowtie_ref_trail),
+        fastafile = seq_data + "{species_id}/{tissue_id}.fas"
+    params:
+        database + bowtie_ref_dir + "{species_id}"
+    output:
+        samfile = sam_dir + "{species_id}/{tissue_id}.sam"
+    log:
+        database + sam_dir + "log/{species_id}/{tissue_id}.log"
+    conda:
+        "envs/bowtie.yaml"
+    shell:
+        "bowtie -f -k 10 --best --norc -v3 {params} {input.fastafile} -S > {output.samfile} 2> {log}"
+
+# Rule: Filter sam files with no internal mismatch
+rule filter_samfile_no_internal_mismatch:
+    input:
+        database + sam_dir + "{species_id}/{tissue_id}.sam"
+    output:
+        database + filtered_no_pos_2_18_mis_dir + "{species_id}/{tissue_id}_filtered.sam"
+    conda:
+        "envs/biopython.yaml"
+    shell:
+        "python scripts/filter.samfile.species.merged.extended.no.position.penalty_no_mismatch_pos2_18.py {input} {output}"
+
+# Rule: Filter sam files with only internal mismatch
+rule filter_samfile_only_internal_mismatch:
+    input:
+        database + sam_dir + "{species_id}/{tissue_id}.sam"
+    output:
+        database + filtered_no_outside_pos_2_18_mis_dir + "{species_id}/{tissue_id}_filtered.sam"
+    conda:
+        "envs/biopython.yaml"
+    shell:
+        "python scripts/filter.samfile.species.merged.extended.no.position.penalty_no_mismatch_outside_pos2_18.py {input} {output}"
+
+# Rule: Count editing events
+rule count_editing_events:
+    input:
+        species_dict,
+        database + extend_ref_dir + "{species_id}.fas",   
+        database + filtered_no_outside_pos_2_18_mis_dir + "{species_id}/{tissue_id}_filtered.sam"
+    output:
+        database + editing_events_dir + '{species_id}/{tissue_id}_editing_events.csv'
+    conda:
+        "envs/biopython.yaml"
+    shell:
+        "python scripts/samfile.all.nucleotides.edit.counter.mirna.py {input} {output} {wildcards.species_id} {wildcards.tissue_id}"
+
+# Rule: Aggregate editing events
+rule aggregate_editing_events:
+    input:
+        lambda wildcards: expand(database + editing_events_dir + "{species_id}/{file}.csv", file=os.listdir(database + editing_events_dir + "{species_id}/"))
+    output:
+        database + editing_events_aggregated_dir + '{species_id}_editing_aggregated.csv'
+    conda:
+        "envs/biopython.yaml"
+    shell:
+        "python scripts/concat_editing_events {output} {input}"

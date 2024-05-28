@@ -86,3 +86,33 @@ rule count_editing_events:
     shell:
         "python scripts/samfile.all.nucleotides.edit.counter.mirna.py {input} {output} {wildcards.species_id} {wildcards.tissue_id}"
 
+rule aggregate_editing_events:
+    input:
+        config['database'] + config['editing_events'] + '{species_id}/'
+    output:
+        config['database'] + config['editing_events_aggregated'] + '{species_id}_editing_aggregated.csv'
+    conda:
+        "envs/biopython.yaml"
+    shell:
+        "python scripts/concat_editing_events.py {input} {output}"
+
+rule collapse_mismatches_species:
+    input:
+        config['database'] + config['editing_events_aggregated'] + '{species_id}_editing_aggregated.csv'
+    output:
+        config['database'] + config['counted_mismatches_collapsed_species'] + '{species_id}_editing_collapsed_species.csv'
+    conda:
+        "envs/biopython.yaml"
+    shell:
+        "python scripts/collapse_mismatches.py {input} {output} species"
+
+
+rule collapse_mismatches_tissue:
+    input:
+        config['database'] + config['editing_events_aggregated'] + '{species_id}_editing_aggregated.csv'
+    output:
+        config['database'] + config['counted_mismatches_collapsed_tissue'] + '{species_id}_editing_collapsed_tissue.csv'
+    conda:
+        "envs/biopython.yaml"
+    shell:
+        "python scripts/collapse_mismatches.py {input} {output} tissue"

@@ -1,72 +1,69 @@
-import pandas as pd
-import numpy as np
-from Bio.SeqIO.FastaIO import SimpleFastaParser
-import matplotlib.pyplot as plt
 import os
-from subprocess import *
 from Bio import SeqIO
 import pickle
-import argparse
+
+# Define file paths
+BASE_PATH = '/home/jcdenton/projects/mirgenedb_database/'
+STEM_FILE_PATH = os.path.join(BASE_PATH, 'merged_all-pri-30-30.fas')
+MATURE_FILE_PATH = os.path.join(BASE_PATH, 'mature.fas')
+STAR_FILE_PATH = os.path.join(BASE_PATH, 'star.fas')
+
+# Open files
+with open(STEM_FILE_PATH, 'r') as stem_file, \
+        open(MATURE_FILE_PATH, 'r') as mature_file, \
+        open(STAR_FILE_PATH, 'r') as star_file:
+    # Parse fasta files
+    stem = SeqIO.to_dict(SeqIO.parse(stem_file, "fasta"))
+    mature = SeqIO.to_dict(SeqIO.parse(mature_file, "fasta"))
+    star = SeqIO.to_dict(SeqIO.parse(star_file, "fasta"))
 
 
-"""
-Input files
-"""
-stemfile   = open('/home/jcdenton/projects/mirgenedb_database/merged_all-pri-30-30.fas', 'r')
-maturefile = open('/home/jcdenton/projects/mirgenedb_database/mature.fas', 'r') 
-starfile   = open('/home/jcdenton/projects/mirgenedb_database/star.fas')
-loopfile   = open('/home/jcdenton/projects/mirgenedb_database/loopfile.fas')
-stem   = SeqIO.to_dict(SeqIO.parse(stemfile, "fasta"))
-mature = SeqIO.to_dict(SeqIO.parse(maturefile, "fasta"))
-star   = SeqIO.to_dict(SeqIO.parse(starfile, "fasta"))
-loop   = SeqIO.to_dict(SeqIO.parse(loopfile, "fasta"))
-outdir = '/home/jcdenton/projects/mirgenedb_database/hairpins/'
+# mfold environment variables
+MFOLD_PATH = '/home/jcdenton/projects/mirgenedb_editing_events__deprecated__/src/RNAstructure/'
+os.environ['PATH'] += os.pathsep + MFOLD_PATH + 'exe'
+os.environ['DATAPATH'] = MFOLD_PATH + 'data_tables/'
 
-"""
-Path variables for mfold
-"""
-os.environ['PATH'] += os.pathsep + '/home/jcdenton/projects/mirgenedb_editing_events/src/RNAstructure/exe'
-os.environ['DATAPATH'] = '/home/jcdenton/projects/mirgenedb_editing_events/src/RNAstructure/data_tables/'
 
-def naive(p, t):
-    """
-    Get start and end position for query string p in target string t
-    """
-    start = 0
-    p = p.replace('U', 'T')
-    t = t.replace('U', 'T')
-    for i in range(len(t) - len(p) + 1):
-        match = True
-        for j in range(len(p)):
-            if t[i+j] != p[j]:
-                match = False
-                break
-        if match:
-            start = i
-    end = start + len(p)
-    return({'start' : start, 'end' : end})
-
-class foldings():
+class Fold():
     def __init__(self, mirgenedb_id):
+        """
+        Initialize the Fold object.
+
+        Args:
+        - mirgenedb_id (str): The identifier of the RNA sequence.
+        """
         self.mirgenedb_id = mirgenedb_id
         self.stem, self.mature, self.star, self._5p_arm, self._3p_arm = self.fetch_sequences()
-        
+
     def is_5p_or_3p_mature(self):
+        """
+        Determine if the RNA is 5' or 3' mature.
+
+        Returns:
+        - str: Either "co_mature", "5p_mature", or "3p_mature".
+        """
         mature_id = [id for id in mature]
         if self.mirgenedb_id + "_5p" in mature_id and self.mirgenedb_id + "_3p" in mature_id:
             return "co_mature"
         elif self.mirgenedb_id + "_5p" in mature_id:
-            return "5p_mature"    
+            return "5p_mature"
         else:
             return "3p_mature"
 
     def fetch_sequences(self):
+        """
+        Fetch RNA sequences from files based on maturity.
+
+        Returns:
+        - tuple: A tuple containing the stem, mature, star, 5' arm, and 3' arm
+        sequences of the RNA.
+        """
         mature_arm = self.is_5p_or_3p_mature()
         if mature_arm == "5p_mature":
             return (str(stem[self.mirgenedb_id + "_pri"].seq), 
                     str(mature[self.mirgenedb_id + "_5p"].seq), 
                     str(star[self.mirgenedb_id + "_3p*"].seq),
-                    str(mature[self.mirgenedb_id +"_5p"].seq),
+                    str(mature[self.mirgenedb_id + "_5p"].seq),
                     str(star[self.mirgenedb_id + "_3p*"].seq))
         if mature_arm == "3p_mature":
             return (str(stem[self.mirgenedb_id + "_pri"].seq), 
@@ -80,37 +77,48 @@ class foldings():
                     str(mature[self.mirgenedb_id + "_3p"].seq),
                     str(mature[self.mirgenedb_id + "_5p"].seq),
                     str(mature[self.mirgenedb_id + "_3p"].seq))
-        
-    def fetch_loop(self):
-        if self.mirgenedb_id + '_loop' in loop:
-            self.loop = str(loop[self.mirgenedb_id + '_loop'].seq)
-        
+
+    def exact_match(self, pattern, text):
+        """
+        Identify start and end position of a pattern in a text.
+
+        Args:
+        - pattern (str): The pattern to search for.
+        - text (str): The text to search within.
+
+        Returns:
+        - dict: A dictionary containing the start and end positions of the
+        pattern.
+        """
+        pattern = pattern.replace('U', 'T')
+        text = text.replace('U', 'T')
+        start = text.find(pattern) + 1
+        end = start + len(pattern)
+        return {'start': start, 'end': end}
+
     def fold_hairpin(self, constrain_stem = False, constrain_loop = False):
         """
-        Fold hairpin using os.system(mfold)
-        TODO
-        add function to check whether mirna has loop sequence, return error if not
+        Fold the RNA hairpin structure and extract relevant information.
         """
-        self.fetch_loop()
-        self.end_5p_arm   = naive(self._5p_arm, self.stem)['end']   # get mature end position
-        self.start_3p_arm = naive(self._3p_arm, self.stem)['start'] # get position of first star
-        self.start_loop   = naive(self.loop, self.stem)['start']
-        self.end_loop     = naive(self.loop, self.stem)['end']
+        self.end_5p_arm = self.exact_match(self._5p_arm, self.stem)['end']
+        self.start_3p_arm = self.exact_match(self._3p_arm, self.stem)['start']
+
         os.chdir('tmp')
-        workingfile = open('workingfile.txt', 'w')
-        workingfile.write(self.stem + '\n')
-        workingfile.close()
-        constraints = open("constraints.txt", "w")
-        if constrain_stem:
-            constraints.write('P' + ' ' + str(1) + ' ' + str(0) + ' ' + str(17) + '\n')     # define 5p ds
-        if constrain_loop:
-            constraints.write('P' + ' ' + str(self.start_loop + 1) + ' ' + str(0) + ' ' + str(self.end_loop - self.start_loop - 2) + '\n') 
-        if constrain_stem:
-            constraints.write('P' + ' ' + str(len(self.stem) - 17 + 1) + ' ' + str(0) + ' ' + str(17))    # define 3p ds
-        constraints.close()
+
+        with open('workingfile.txt', 'w') as workingfile:
+            workingfile.write(self.stem + '\n')
+
+        with open('constraints.txt', 'w') as constraints:
+            if constrain_stem is True:
+                constraints.write('P' + ' ' + str(1) + ' ' + str(0) + ' ' + str(17) + '\n')     # define 5p ds
+            if constrain_loop is True:
+                constraints.write('P' + ' ' + str(self.end_5p_arm + 1) + ' ' + str(0) + ' ' + str(self.start_3p_arm - self.end_5p_arm - 2) + '\n')
+            if constrain_stem is True:
+                constraints.write('P' + ' ' + str(len(self.stem) - 17 + 1) + ' ' + str(0) + ' ' + str(17))    # define 3p ds
 
         os.system('mfold SEQ=workingfile.txt AUX=constraints.txt')
         os.system('ct2dot workingfile.txt.ct ALL workingfile.txt.dot')
+
         with open('workingfile.txt.dot', 'r') as file:
             self.dG = file.readline()
             self.seq = file.readline()
@@ -118,18 +126,81 @@ class foldings():
 
         os.chdir('..')
 
-        self.fold_dict = {'dG' : self.dG, 'seq' : self.seq, 'dot' : self.dot}
+    def find_motif(self):
+        # Determine positions of 5' and 3' arms
+        self.end_5p_arm = self.exact_match(self._5p_arm, self.stem)['end']
+        self.start_3p_arm = self.exact_match(self._3p_arm, self.stem)['start']
 
-    def check_misfold(self, stem_fold): 
-        """
-        Check if there are opposite folds before or after center of loop
-        """        
-        misfold = False
-        loop_middle = int(self.start_3p_arm - ((self.start_3p_arm - self.end_5p_arm) / 2))
-        for i in range(len(stem_fold)):
-            if (str(stem_fold[i]) == ')' and i < loop_middle):
-                misfold = True
-            elif (str(stem_fold[i]) == '(' and i > loop_middle):
-                misfold = True
-        return misfold
+        # Calculate positions relative to arms
+        pos_5p = [i + self.end_5p_arm for i in [-4, -3, -2, -1]]
+        pos_3p = [i + self.start_3p_arm for i in [1, 0, -1, -2]]
+        
+        # Extract sequences and dot-bracket notations
+        dicer_cleave = [
+            [self.seq[i] for i in pos_5p],
+            [self.dot[i] for i in pos_5p],
+            [self.dot[i] for i in pos_3p],
+            [self.seq[i] for i in pos_3p]
+                        ]
+
+        # Initialize motif list
+        self.GYM = [0, 0, 0]
+
+        # Check for specific motifs related to dicer cleavage
+        if dicer_cleave[3][-2] == 'G':
+            self.GYM[0] = 1
+        if dicer_cleave[3][-3] in ('C', 'T', 'U'):
+            self.GYM[1] = 1
+        if dicer_cleave[2][-4] == '.':
+            self.GYM[2] = 1
+
+    def count_bulges(self, fold):
+        return fold.count('.')
+
+    def count_basepair(self, fold):
+        return sum(1 for i in fold if i in ('(', ')'))
+
+    def check_misfold(self):
+        # Determine positions of 5' and 3' arms
+        self.end_5p_arm = self.exact_match(self._5p_arm, self.stem)['end']
+        self.start_3p_arm = self.exact_match(self._3p_arm, self.stem)['start']
+
+        # Check for misfolds
+        for i, dot in enumerate(self.dot):
+            if dot == ')' and i < self.end_5p_arm:
+                return True
+            elif dot == '(' and i > self.start_3p_arm:
+                return True
+
+        return False
+
+    def find_bulge_length(self):
+        # Determine positions of 5' and 3' arms
+        pos_5p_arm = self.exact_match(self._5p_arm, self.stem)
+        pos_3p_arm = self.exact_match(self._3p_arm, self.stem)
+    
+        # Extract dot-bracket notation for arms
+        bulges_5p = self.dot[pos_5p_arm['start']:pos_5p_arm['end']]
+        bulges_3p = self.dot[pos_3p_arm['start']:pos_3p_arm['end']-2] # Get correct counting
+
+        # Calculate bulge length and characteristics
+        self.bulge_len_dict = {
+                '5p_length': len(self._5p_arm),
+                '5p_bulges': self.count_bulges(bulges_5p),
+                '5p_bulges_len': float(self.count_bulges(bulges_5p)) / (len(self._5p_arm)),
+                '5p_basepair': self.count_basepair(bulges_5p),
+                '5p_basepair_len': float(self.count_basepair(bulges_5p)) / (len(self._5p_arm)),
+                '3p_length': len(self._3p_arm),
+                '3p_bulges': self.count_bulges(bulges_3p),
+                '3p_bulges_len': float(self.count_bulges(bulges_3p)) / len(self._3p_arm),
+                '3p_basepair': self.count_basepair(bulges_3p),
+                '3p_basepair_len': float(self.count_basepair(bulges_3p)) / (len(self._3p_arm)) 
+                }
+
+    def fetch_hairpin(self, path):
+        with open(path, 'rb') as file:
+            self.hairpin = pickle.load(file)
+            self.seq = self.hairpin[0]
+            self.dot = self.hairpin[1]
+            self.dG = self.hairpin[2]
 

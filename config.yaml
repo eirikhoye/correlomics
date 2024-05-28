@@ -10,4 +10,6 @@ filtered_no_pos_2_18_mis : "mirgenedb_merged_extended_sam_filtered_no_pos2_18_mi
 filtered_no_outside_pos_2_18_mis : "mirgenedb_merged_extended_sam_filtered_no_outside_pos2_18_mismatch/"
 species_dict : "species_dict.txt"
 editing_events : 'counted_mismatches/'
-
+editing_events_aggregated : 'counted_mismatches_aggregated/'
+counted_mismatches_collapsed_species : 'counted_mismatches_collapsed_species/'
+counted_mismatches_collapsed_tissue : 'counted_mismatches_collapsed_tissue/'

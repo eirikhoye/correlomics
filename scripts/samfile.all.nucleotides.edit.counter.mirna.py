@@ -1,10 +1,7 @@
 import sys
 from Bio import SeqIO
-from Bio.SeqIO.FastaIO import SimpleFastaParser
-import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-import os
 import re
 import json
 
@@ -32,14 +29,14 @@ species_id = sys.argv[5]
 tissue_name = sys.argv[6]
 
 
-
 """
 Define functions
 """
 
+
 def fetch_mismatch(read_start, y, mismatch_pos, n, mirna, sequence):
     canon_seq = ref_seq[mirna].seq[5:-5]
-    read_seq  = sequence
+    read_seq = sequence
     if len(read_seq) > len(canon_seq):
         overhang_len = len(read_seq) - len(canon_seq)
     else:
@@ -55,17 +52,17 @@ def fetch_mismatch(read_start, y, mismatch_pos, n, mirna, sequence):
             mis_pos = 1 + int(mismatch_pos[k[1, i]]) + int(y[i-1][1])
             if mis_pos > len(canon_seq):
                 mis_pos = '+' + str(mis_pos - len(canon_seq))
-            y[i] = [ mis_nuc, str(mis_pos)]
+            y[i] = [mis_nuc, str(mis_pos)]
             if i == 1:
-                canon_pos[i] = 1 + int(mismatch_pos[k[1,i]]) + canon_pos[i-1]
+                canon_pos[i] = 1 + int(mismatch_pos[k[1, i]]) + canon_pos[i-1]
             if i == 2:
-                canon_pos[i] = 1 + int(mismatch_pos[k[1,i]]) + canon_pos[i-1]
+                canon_pos[i] = 1 + int(mismatch_pos[k[1, i]]) + canon_pos[i-1]
         else:
             mis_nuc = mismatch_pos[k[0, i]]
             mis_pos = 1 + int(mismatch_pos[k[1, i]]) + read_start - 1
             if mis_pos > len(canon_seq):
                 mis_pos = '+' + str(mis_pos - len(canon_seq))
-            y[0] = [ mis_nuc, str(mis_pos)]
+            y[0] = [mis_nuc, str(mis_pos)]
             canon_pos[i] = int(mismatch_pos[k[1, i]]) + read_start - 1
 
     if len(y) < n:
@@ -73,9 +70,11 @@ def fetch_mismatch(read_start, y, mismatch_pos, n, mirna, sequence):
     else:
         return str(y[n-1][0]) + 'to' + str(sequence[canon_pos[n-1] - read_start+1]) + '_' + str(y[n-1][1])
 
+
 def split_ID(ID):
     ID = ID.replace('#', '-').replace('x', '-').split('-')[1]
     return int(ID)
+
 
 def mature_star(arm):
     if arm.endswith('p'):
@@ -85,6 +84,7 @@ def mature_star(arm):
     else:
         return 'NA'
 
+
 def parse_sam(file, species, tissue):
     skip_lines = 0
     with open(file, 'r') as sam_file:
@@ -93,30 +93,32 @@ def parse_sam(file, species, tissue):
                 skip_lines += 1
             else:
                 break
-    sam_df = pd.read_csv(file, sep = '\t', skiprows=skip_lines, header=None)
+    sam_df = pd.read_csv(file, sep='\t', skiprows=skip_lines, header=None)
     sam_df = sam_df.rename(columns={0: 'ID', 2: 'miRNA', 3: 'read_start', 9: 'read_seq', 12: 'MD:mis_pos', 13: 'NM:i:#'})            
-    sam_df['read_start']    = sam_df['read_start'] - 5 # Adjust for 5prime +5nt extension reference
-    sam_df['species']       = species
-    sam_df['tissue']        = tissue
-    sam_df['nr_reads']      = pd.Series(map(lambda x : split_ID(x), sam_df['ID']))
-    sam_df['arm']           = pd.Series(map(lambda x : x.split('_')[1], sam_df['miRNA']))
-    sam_df['mature_star']   = pd.Series(map(lambda x : mature_star(x), sam_df['arm'] ))
-    sam_df['nr_mismatches'] = pd.Series(map(lambda x : int(x.split(':')[2]), sam_df['NM:i:#']))
-    sam_df['mismatch_pos']  = pd.Series(map(lambda x : re.split('(\d+)', x), sam_df['MD:mis_pos']))
-    sam_df['y']             = pd.Series(map(lambda x : [0] * x, sam_df['nr_mismatches']))
-    sam_df['from_to_1']     = pd.Series(map(lambda read_start, y, mismatch_pos, mirna, sequence: fetch_mismatch(read_start, y, mismatch_pos, 1, mirna, sequence), sam_df['read_start'], sam_df['y'], sam_df['mismatch_pos'], sam_df['miRNA'], sam_df['read_seq']))
-    sam_df['from_to_2']     = pd.Series(map(lambda read_start, y, mismatch_pos, mirna, sequence: fetch_mismatch(read_start, y, mismatch_pos, 2, mirna, sequence), sam_df['read_start'], sam_df['y'], sam_df['mismatch_pos'], sam_df['miRNA'], sam_df['read_seq']))
-    sam_df['from_to_3']     = pd.Series(map(lambda read_start, y, mismatch_pos, mirna, sequence: fetch_mismatch(read_start, y, mismatch_pos, 3, mirna, sequence), sam_df['read_start'], sam_df['y'], sam_df['mismatch_pos'], sam_df['miRNA'], sam_df['read_seq']))
+    sam_df['read_start'] = sam_df['read_start'] - 5  # Adjust for 5prime +5nt extension reference
+    sam_df['species'] = species
+    sam_df['tissue'] = tissue
+    sam_df['nr_reads'] = pd.Series(map(lambda x: split_ID(x), sam_df['ID']))
+    sam_df['arm'] = pd.Series(map(lambda x: x.split('_')[1], sam_df['miRNA']))
+    sam_df['mature_star'] = pd.Series(map(lambda x: mature_star(x), sam_df['arm']))
+    sam_df['nr_mismatches'] = pd.Series(map(lambda x: int(x.split(':')[2]), sam_df['NM:i:#']))
+    sam_df['mismatch_pos'] = pd.Series(map(lambda x: re.split('(\d+)', x), sam_df['MD:mis_pos']))
+    sam_df['y'] = pd.Series(map(lambda x: [0] * x, sam_df['nr_mismatches']))
+    sam_df['from_to_1'] = pd.Series(map(lambda read_start, y, mismatch_pos, mirna, sequence: fetch_mismatch(read_start, y, mismatch_pos, 1, mirna, sequence), sam_df['read_start'], sam_df['y'], sam_df['mismatch_pos'], sam_df['miRNA'], sam_df['read_seq']))
+    sam_df['from_to_2'] = pd.Series(map(lambda read_start, y, mismatch_pos, mirna, sequence: fetch_mismatch(read_start, y, mismatch_pos, 2, mirna, sequence), sam_df['read_start'], sam_df['y'], sam_df['mismatch_pos'], sam_df['miRNA'], sam_df['read_seq']))
+    sam_df['from_to_3'] = pd.Series(map(lambda read_start, y, mismatch_pos, mirna, sequence: fetch_mismatch(read_start, y, mismatch_pos, 3, mirna, sequence), sam_df['read_start'], sam_df['y'], sam_df['mismatch_pos'], sam_df['miRNA'], sam_df['read_seq']))
     sam_df = sam_df[['ID', 'nr_reads', 'miRNA', 'arm', 'mature_star', 'species', 'tissue', 'read_start', 'read_seq', 'from_to_1', 'from_to_2', 'from_to_3']]
-    return(sam_df)
+    return sam_df
+
 
 def count_total_reads(mirna, counts):
     total = pd.Series([0]*len(mirna))
     local_df = pd.DataFrame([mirna, counts, total], index=['miRNA', 'counts', 'total']).T
 
     for x in local_df.miRNA.unique():
-        local_df.loc[local_df.miRNA == x, 'total'] = local_df[local_df.miRNA==x].counts.sum()
+        local_df.loc[local_df.miRNA == x, 'total'] = local_df[local_df.miRNA == x].counts.sum()
     return local_df.total
+
 
 def split_mismatch_name(mismatch):
     if str(mismatch) == 'nan':
@@ -124,13 +126,15 @@ def split_mismatch_name(mismatch):
     mismatch = mismatch.split('_')
     return mismatch[0], str(mismatch[1])
 
+
 def split_edit_from_to(mismatch):
     edit_from = mismatch.split('to')[0]
-    edit_to   = mismatch.split('to')[1].split('_')[0]
+    edit_to = mismatch.split('to')[1].split('_')[0]
     return edit_from, edit_to
 
-df = parse_sam(file = sam_file, species=species_names[species_id.capitalize()], tissue = tissue_name)
-df.to_csv(out_file, sep = '\t')
+
+df = parse_sam(file=sam_file, species=species_names[species_id.capitalize()], tissue=tissue_name)
+df.to_csv(out_file, sep='\t')
 
 
 

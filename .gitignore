@@ -5,3 +5,17 @@ test_folds/
 notebooks/
 chatgpt_suggests/
 .snakemake/
+test/
+test_folds/
+test_folds_pre/
+test_let7_no_constraints/
+test_let7_pre/
+test_let7_restrict_loop/
+test_let7_restrict_lower_stem/
+test_let7_restrict_lower_stem_loop/
+test_no_constraints/
+test_restrict_loop/
+test_restrict_lower_stem/
+test_restrict_lower_stem_loop/
+tests/
+tmp/
