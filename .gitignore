@@ -19,3 +19,6 @@ test_restrict_lower_stem/
 test_restrict_lower_stem_loop/
 tests/
 tmp/
+test_bulge_len.csv
+test_fold_dir/
+.vscode/launch.json

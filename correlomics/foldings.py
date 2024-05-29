@@ -29,6 +29,7 @@ class Fold():
         """
         Initialize the Fold object.
 
+
         Args:
         - mirgenedb_id (str): The identifier of the RNA sequence.
         """
@@ -161,17 +162,15 @@ class Fold():
         return sum(1 for i in fold if i in ('(', ')'))
 
     def check_misfold(self):
+        
         # Determine positions of 5' and 3' arms
         self.end_5p_arm = self.exact_match(self._5p_arm, self.stem)['end']
         self.start_3p_arm = self.exact_match(self._3p_arm, self.stem)['start']
 
-        # Check for misfolds
+        # Check if brackets are wrong direction upstream or downstream 
         for i, dot in enumerate(self.dot):
-            if dot == ')' and i < self.end_5p_arm:
+            if (dot == ')' and i < self.end_5p_arm) or (dot == '(' and i > self.start_3p_arm):
                 return True
-            elif dot == '(' and i > self.start_3p_arm:
-                return True
-
         return False
 
     def find_bulge_length(self):
@@ -200,7 +199,7 @@ class Fold():
     def fetch_hairpin(self, path):
         with open(path, 'rb') as file:
             self.hairpin = pickle.load(file)
-            self.seq = self.hairpin[0]
-            self.dot = self.hairpin[1]
-            self.dG = self.hairpin[2]
+            self.seq = self.hairpin[1]
+            self.dot = self.hairpin[2]
+            self.dG = self.hairpin[3]
 

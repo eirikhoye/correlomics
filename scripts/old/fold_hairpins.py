@@ -1,126 +1,79 @@
-import pandas as pd
-import numpy as np
-from Bio.SeqIO.FastaIO import SimpleFastaParser
-import matplotlib.pyplot as plt
-import os
-from subprocess import *
-from Bio import SeqIO
 import pickle
+import os
+import sys
+from Bio import SeqIO
 
-stemfile   = open('/home/jcdenton/projects/mirgenedb_database/merged_all-pri-30-30.fas', 'r')
+current_dir = os.path.dirname(__file__)
+parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
+sys.path.append(parent_dir)
+
+# Now you can import your module
+from correlomics.foldings import Fold
+
+
+"""
+Define input files
+"""
+stemfile   = open('/home/jcdenton/projects/mirgenedb_database/precursor.fas', 'r')
 maturefile = open('/home/jcdenton/projects/mirgenedb_database/mature.fas', 'r') 
 starfile   = open('/home/jcdenton/projects/mirgenedb_database/star.fas')
+loopfile   = open('/home/jcdenton/projects/mirgenedb_database/loopfile.fas')
 stem   = SeqIO.to_dict(SeqIO.parse(stemfile, "fasta"))
 mature = SeqIO.to_dict(SeqIO.parse(maturefile, "fasta"))
 star   = SeqIO.to_dict(SeqIO.parse(starfile, "fasta"))
-
-os.environ['PATH'] += os.pathsep + '/home/jcdenton/projects/mirgenedb_editing_events/src/RNAstructure/exe'
-os.environ['DATAPATH'] = '/home/jcdenton/projects/mirgenedb_editing_events/src/RNAstructure/data_tables/'
-
-outdir = '/home/jcdenton/projects/mirgenedb_database/hairpins/'
-
-### DEBUG REMOVE ###
-outdir = '/home/jcdenton/projects/correlomics/test_folds/'
-### DEBUG REMOVE ###
+loop   = SeqIO.to_dict(SeqIO.parse(loopfile, "fasta"))
+outdir = '/home/jcdenton/projects/mirgenedb_database/hairpins_let7_pre/'
 
 
+### debug
+outdir = '/home/jcdenton/projects/correlomics/test_let7_pre/'
 
-def naive(p, t):
-    start = 0
-    p = p.replace('U', 'T')
-    t = t.replace('U', 'T')
-    for i in range(len(t) - len(p) + 1):
-        match = True
-        for j in range(len(p)):
-            if t[i+j] != p[j]:
-                match = False
-                break
-        if match:
-            start = i
-    end = start + len(p)
-    return({'start' : start, 'end' : end})
+###
 
-class foldings():
-    def __init__(self, mirgenedb_id):
-        self.mirgenedb_id = mirgenedb_id
-        self.stem, self.mature, self.star, self._5p_arm, self._3p_arm = self.fetch_sequences()
-        
-    
-    
-    def is_5p_or_3p_mature(self):
-        mature_id = [id for id in mature]
-        if self.mirgenedb_id + "_5p" in mature_id and self.mirgenedb_id + "_3p" in mature_id:
-            return "co_mature"
-        elif self.mirgenedb_id + "_5p" in mature_id:
-            return "5p_mature"    
-        else:
-            return "3p_mature"
-        
-
-    def fetch_sequences(self):
-        mature_arm = self.is_5p_or_3p_mature()
-        if mature_arm == "5p_mature":
-            return (str(stem[self.mirgenedb_id + "_pri"].seq), 
-                    str(mature[self.mirgenedb_id + "_5p"].seq), 
-                    str(star[self.mirgenedb_id + "_3p*"].seq),
-                    str(mature[self.mirgenedb_id +"_5p"].seq),
-                    str(star[self.mirgenedb_id + "_3p*"].seq))
-        if mature_arm == "3p_mature":
-            return (str(stem[self.mirgenedb_id + "_pri"].seq), 
-                    str(mature[self.mirgenedb_id + "_3p"].seq), 
-                    str(star[self.mirgenedb_id + "_5p*"].seq),
-                    str(mature[self.mirgenedb_id + "_3p"].seq),
-                    str(star[self.mirgenedb_id + "_5p*"].seq))
-        if mature_arm == 'co_mature':
-            return (str(stem[self.mirgenedb_id + "_pri"].seq), 
-                    str(mature[self.mirgenedb_id + "_5p"].seq), 
-                    str(mature[self.mirgenedb_id + "_3p"].seq),
-                    str(mature[self.mirgenedb_id + "_5p"].seq),
-                    str(mature[self.mirgenedb_id + "_3p"].seq))
-
-    def fold_hairpin(self):
-
-        self.end_5p_arm = naive(self._5p_arm, self.stem)['end']   # get mature end position
-        self.start_3p_arm = naive(self._3p_arm, self.stem)['start']   # get position of first star
-        
-        os.chdir('tmp')
-        workingfile = open('workingfile.txt', 'w')
-        workingfile.write(self.stem + '\n')
-        workingfile.close()
-        constraints = open("constraints.txt", "w")
-        constraints.write('P' + ' ' + str(1)         + ' ' + str(0) + ' ' + str(17) + '\n')     # define 5p ds
-#       constraints.write('P' + ' ' + str(loopstart + 1) + ' ' + str(0) + ' ' + str(loopend - loopstart - 2) + '\n') # define loop ds
-        constraints.write('P' + ' ' + str(len(self.stem) - 17 + 1) + ' ' + str(0) + ' ' + str(17))    # define 3p ds
-        constraints.close()
-
-        os.system('mfold SEQ=workingfile.txt AUX=constraints.txt')
-        os.system('ct2dot workingfile.txt.ct ALL workingfile.txt.dot')
-        with open('workingfile.txt.dot', 'r') as file:
-            self.dG = file.readline()
-            self.seq = file.readline()
-            self.dot = file.readline()
-
-        os.chdir('..')
-
-        self.fold_dict = {'dG' : self.dG, 'seq' : self.seq, 'dot' : self.dot}
-        with open(outdir + self.mirgenedb_id + '.pkl', 'wb') as f:
-            pickle.dump(self.fold_dict, f)
+# Open output files
+output_files = {
+    'no_constraints': open('misfold_no_constraints.txt', 'w'),
+    'constrain_lower_stem': open('misfold_constrain_lower_stem.txt', 'w'),
+    'constrain_lower_stem_and_loop': open('misfold_constrain_lower_stem_and_loop.txt', 'w')
+}
 
 
-#test = foldings("Hsa-Let-7-P1b")
-#test.fold_hairpin()
-#print(test.fold_dict)
+def process_hairpin(hairpin, output_file):
+    if hairpin.check_misfold() is False:
+        with open(outdir + hairpin.mirgenedb_id + '.pkl', 'wb') as f:
+            pickle.dump([hairpin.seq, hairpin.dot, hairpin.dG], f)
+    else:
+        output_file.write(hairpin.id + '\n')
+        output_file.write(hairpin.seq)
+        output_file.write(hairpin.dot)
 
 
-
+# Process hairpins
 for id in stem.keys():
     if "Mir-451" in id:
         continue
-    #### DEBUG ###
-    if not "Obi-Novel-59" in id:
+
+    if "Hsa-Let-7" not in id:
         continue
-    #### DEBUG ###
 
 
-    hairpin = foldings(id[:-4])
-    hairpin.fold_hairpin()
+
+    hairpin = Fold(id[:-4])  # drop miRNA without loop seq
+    if hairpin.mirgenedb_id + '_loop' not in loop.keys():
+        continue
+
+    hairpin.fold_hairpin()  # no constraints
+    if not hairpin.check_misfold():
+        process_hairpin(hairpin, output_files['no_constraints'])
+    else:
+        hairpin.fold_hairpin(constrain_stem=True)  # Constrain lower stem to not fold
+        if not hairpin.check_misfold():
+            process_hairpin(hairpin, output_files['constrain_lower_stem'])
+        else:
+            hairpin.fold_hairpin(constrain_stem=True, constrain_loop=True)  # Constrain lower stem and loop to not fold
+            if not hairpin.check_misfold():
+                process_hairpin(hairpin, output_files['constrain_lower_stem_and_loop'])
+
+# Close output files
+for file in output_files.values():
+    file.close()

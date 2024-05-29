@@ -9,6 +9,7 @@
             "type": "python",
             "request": "launch",
             "program": "${file}",
+            "args": ["test_fold_dir/", "--output_csv", "test_bulge_len.csv"],
             "console": "integratedTerminal",
             "justMyCode": true
         }
