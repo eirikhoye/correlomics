@@ -42,9 +42,6 @@ outdir = {
 
 # Process hairpins
 for id in stem.keys():
-#   if "Hsa-Let-7" not in id:
-#       continue
-
     if "Mir-451" in id:
         continue
 
@@ -67,3 +64,4 @@ for id in stem.keys():
     hairpin.fold_hairpin(constrain_stem=False, constrain_loop=True)
     with open(outdir['restrict_loop'] + hairpin.mirgenedb_id + '.pkl', 'wb') as f:
         pickle.dump([hairpin.mirgenedb_id+'\n', hairpin.seq, hairpin.dot, hairpin.dG], f)
+
