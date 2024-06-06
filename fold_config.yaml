@@ -1,0 +1,17 @@
+file_paths:
+  base_path: /home/jcdenton/projects/mirgenedb_database/
+  fasta_files:
+    pri_mirna: merged_all-pri-30-30.fas
+    mature: mature.fas
+    star: star.fas
+    loop: loopfile.fas
+
+out_dir:
+  none: /home/jcdenton/projects/correlomics/test_dir/none/
+  stem: /home/jcdenton/projects/correlomics/test_dir/stem/
+  loop: /home/jcdenton/projects/correlomics/test_dir/loop/
+  both: /home/jcdenton/projects/correlomics/test_dir/both/
+
+filters:
+  exclude: ["Mir-451"]
+  include_only: ["Hsa-Mir-8"]

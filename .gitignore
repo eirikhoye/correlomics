@@ -22,3 +22,4 @@ tmp/
 test_bulge_len.csv
 test_fold_dir/
 .vscode/launch.json
+test_dir/
