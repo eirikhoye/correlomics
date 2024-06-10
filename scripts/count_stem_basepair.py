@@ -8,7 +8,7 @@ parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
 sys.path.append(parent_dir)
 
 # Now you can import your module
-from correlomics.foldings import Fold
+from correlomics.RNAfolding import Fold
 
 hairpin_dict = '/home/jcdenton/projects/correlomics/test_folds/'
 bulge_len_dict = {}

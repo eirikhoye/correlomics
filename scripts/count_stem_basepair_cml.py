@@ -16,7 +16,7 @@ parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
 sys.path.append(parent_dir)
 
 # Now you can import your module
-from correlomics.foldings import Fold
+from correlomics.RNAfolding import Fold
 
 bulge_len_dict = {}
 misfolded_ids = []
